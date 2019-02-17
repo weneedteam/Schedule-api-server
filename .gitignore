@@ -1,0 +1,6 @@
+__pycache__
+local_uwsgi.ini
+*.pyc
+env/
+*.sock
+log/

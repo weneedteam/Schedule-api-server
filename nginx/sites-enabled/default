@@ -1,0 +1,24 @@
+upstream django {
+    server unix:/usr/src/scheduler.sock;
+}
+
+# configuration of the server
+server {
+    listen      80;
+
+    server_name .example.com; # substitute your machine's IP address or FQDN
+    charset     utf-8;
+
+    location /static {
+        alias /usr/src/app/static; # your Django project's static files - amend as required
+    }
+
+    # Finally, send all non-media requests to the Django server.
+    location / {
+      include /etc/nginx/uwsgi_params;
+      proxy_pass http://schedule:8000;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
