@@ -6,3 +6,4 @@ env/
 log/
 venv/
 .idea/
+db.sqlite3
