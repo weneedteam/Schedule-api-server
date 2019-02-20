@@ -118,6 +118,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 INTERNAL_IPS = '127.0.0.1'
 
+AUTH_USER_MODEL = 'member.User'
+
 import local_settings
 requires = [
     'DEBUG',
