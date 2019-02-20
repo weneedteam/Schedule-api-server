@@ -12,7 +12,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username', 'nickname', ]
 
 
-class UserProfile():
+class UserProfile(models.Model):
     KOREAN = 'KR'
     ENGLISH = 'EN'
 
