@@ -29,3 +29,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_profile = UserProfile.objects.create(user=user, birth=validated_data.pop('birth'), language=validated_data.pop('language'))
 
         return user_profile
+
+    def update(self, instance, validated_data):
+        user_data = validated_data['user']
+        user = User.objects.get(id=instance.user_id)
+        UserSerializer.update(UserSerializer(), instance=user, validated_data=user_data)
+
+        instance.birth = validated_data.get('birth', instance.birth)
+        instance.language = validated_data.get('language', instance.language)
+        instance.save()
+
+        return instance
