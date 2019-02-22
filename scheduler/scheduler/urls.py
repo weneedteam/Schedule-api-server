@@ -30,6 +30,8 @@ urlpatterns = [
 
     path('api-token-auth/', obtain_jwt_token),
     path('api-token-verify/', verify_jwt_token),
+
+    path('v1/', include('member.urls')),
 ]
 
 if settings.DEBUG:
