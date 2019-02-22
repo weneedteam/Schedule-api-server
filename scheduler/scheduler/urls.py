@@ -18,9 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
+from rest_framework_swagger.views import get_swagger_view
+
+
+schema_view = get_swagger_view(title='Schedule API')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    path('api-docs/', schema_view),
 
     path('api-token-auth/', obtain_jwt_token),
     path('api-token-verify/', verify_jwt_token),
