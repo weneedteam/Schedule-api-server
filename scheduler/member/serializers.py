@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import UserProfile, User
+from .models import UserProfile, User, FriendRequest
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -32,3 +32,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FriendRequest
+        fields = '__all__'
