@@ -4,17 +4,9 @@ from .models import UserProfile, User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # password2 = serializers.CharField(max_length=128)
     class Meta:
         model = User
         fields = ('email', 'username', 'nickname', 'password')
-
-    # def clean_password2(self):
-    #     cd = self.cleaned_data
-    #     if cd['password'] != cd['password2']:
-    #         raise forms.ValidationError("Password deosn't match.")
-    #
-    # return cd['password2']
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
