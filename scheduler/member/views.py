@@ -11,7 +11,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 
-class UserProfileViewSet(viewsets.ModelViewSet):
+class UserProfileViewSet(viewsets.GenericViewSet,
+                         mixins.CreateModelMixin,
+                         mixins.RetrieveModelMixin,
+                         mixins.UpdateModelMixin,
+                         mixins.DestroyModelMixin):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
@@ -53,6 +57,29 @@ class UserProfileViewSet(viewsets.ModelViewSet):
                 'status': 500,
                 'message': '정보 수정 오류'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False)
+    def search(self, request):
+        try:
+            user = request.GET.get('name')
+            user = UserProfile.objects.get(user__nickname=user)
+
+            user_data = {
+                'email': user.user.email,
+                'username': user.user.username,
+                'nickname': user.user.nickname,
+                'birth': user.birth,
+            }
+
+            return Response({
+                'status': 200,
+                'user': user_data,
+            })
+        except:
+            return Response({
+                'status': 200,
+                'message': '유저를 찾을 수 없습니다'
+            })
 
 
 class FriendRequestViewSet(viewsets.GenericViewSet,
