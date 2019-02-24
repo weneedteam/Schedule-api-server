@@ -1,11 +1,14 @@
-from django.shortcuts import render
+from django.utils import timezone
 
-from .models import UserProfile, User
+from django.db.models import Q
 
-from .serializers import UserProfileSerializer
+from .models import UserProfile, User, FriendRequest
 
-from rest_framework import viewsets, status
+from .serializers import UserProfileSerializer, FriendRequestSerializer
+
+from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
@@ -50,3 +53,63 @@ class UserProfileViewSet(viewsets.ModelViewSet):
                 'status': 500,
                 'message': '정보 수정 오류'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class FriendRequestViewSet(viewsets.GenericViewSet,
+                           mixins.CreateModelMixin,
+                           mixins.RetrieveModelMixin,
+                           mixins.DestroyModelMixin):
+    queryset = FriendRequest.objects.all()
+    serializer_class = FriendRequestSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            friend_request = FriendRequest.objects.get(Q(request_user=request.data['response_user'], response_user=request.data['request_user'])
+                                                       | Q(request_user=request.data['request_user'], response_user=request.data['response_user']))
+            if friend_request.assent:
+                return Response({
+                    'status': 200,
+                    'message': '이미 친구 상태'
+                })
+
+            if friend_request.request_user.id == int(request.data['request_user']):
+                return Response({
+                    'status': 200,
+                    'message': '이미 친구 요청을 보냄'
+                })
+            else:
+                friend_request.assent = True
+                friend_request.assented_at = timezone.now()
+                friend_request.save()
+
+                request_user = UserProfile.objects.get(user__id=int(request.data['request_user']))
+                response_user = UserProfile.objects.get(user_id=int(request.data['response_user']))
+
+                req_user = User.objects.get(id=request_user.user_id)
+                res_user = User.objects.get(id=response_user.user_id)
+
+                request_user.friends.add(res_user)
+                request_user.save()
+                response_user.friends.add(req_user)
+                response_user.save()
+
+                return Response({
+                    'status': 200,
+                    'message': '친구 요청 수락',
+                })
+        except:
+            if request.data['request_user'] == request.data['response_user']:
+                return Response({
+                    'status': 200,
+                    'message': '자기 자신에게는 친구 요청 불가'
+                })
+
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+
+            return Response({
+                'status': 201,
+                'message': '친구 요청 보냄'
+            }, status=status.HTTP_201_CREATED, headers=headers)
