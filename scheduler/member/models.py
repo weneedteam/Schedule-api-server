@@ -12,7 +12,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username', 'nickname', ]
 
 
-class UserProfile():
+class UserProfile(models.Model):
     KOREAN = 'KR'
     ENGLISH = 'EN'
 
@@ -24,3 +24,15 @@ class UserProfile():
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     birth = models.DateField(null=False, blank=False)
     language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default="KR", null=False)
+    friends = models.ManyToManyField(User, related_name='userProfile_friends')
+
+
+class FriendRequest(models.Model):
+    request_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_request_user')
+    response_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_response_user')
+    assent = models.BooleanField(null=False, default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    assented_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return "{} -> {}" .format(self.request_user, self.response_user)
