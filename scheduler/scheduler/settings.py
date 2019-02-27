@@ -40,7 +40,18 @@ INSTALLED_APPS = [
     'django_extensions',
     'debug_toolbar',
     'rest_framework',
+    'rest_framework.authtoken',
     'rest_framework_swagger',
+    'rest_auth',
+
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'rest_auth.registration',
+
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.kakao',
 
     'schedule',
     'member',
@@ -121,6 +132,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 INTERNAL_IPS = '127.0.0.1'
 
 AUTH_USER_MODEL = 'member.User'
+
+SITE_ID = 1
 
 import local_settings
 requires = [
