@@ -11,7 +11,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 
-class UserProfileViewSet(viewsets.ModelViewSet):
+class UserProfileViewSet(viewsets.GenericViewSet,
+                         mixins.CreateModelMixin,
+                         mixins.RetrieveModelMixin,
+                         mixins.UpdateModelMixin,
+                         mixins.DestroyModelMixin):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
@@ -19,12 +23,15 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
+            password = serializer.validated_data['user'].pop('password')
+            serializer.validated_data['user'].pop('password2')
+            user_profile = serializer.save()
+            user_profile.user.set_password(password)
+            user_profile.user.save()
             return Response({
                 'status': 201,
                 'message': '회원가입 성공'
-            }, status=status.HTTP_201_CREATED, headers=headers)
+            }, status=status.HTTP_201_CREATED)
         except:
             return Response({
                 'status': 500,
@@ -53,6 +60,29 @@ class UserProfileViewSet(viewsets.ModelViewSet):
                 'status': 500,
                 'message': '정보 수정 오류'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False)
+    def search(self, request):
+        try:
+            user = request.GET.get('name')
+            user_profile = UserProfile.objects.get(user__nickname=user)
+
+            user_data = {
+                'email': user_profile.user.email,
+                'username': user_profile.user.username,
+                'nickname': user_profile.user.nickname,
+                'birth': user_profile.birth,
+            }
+
+            return Response({
+                'status': 200,
+                'user': user_data,
+            })
+        except:
+            return Response({
+                'status': 200,
+                'message': '유저를 찾을 수 없습니다'
+            })
 
 
 class FriendRequestViewSet(viewsets.GenericViewSet,
