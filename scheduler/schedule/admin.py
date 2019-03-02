@@ -1,3 +1,9 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Schedule
+
+
+class ScheduleAdmin(admin.ModelAdmin):
+    list_display = ('title', 'registrant', 'start_time', 'state', )
+
+admin.site.register(Schedule)
