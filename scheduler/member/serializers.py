@@ -1,0 +1,53 @@
+from rest_framework import serializers
+
+from .models import UserProfile, User, FriendRequest
+
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        style={'input_type': 'password'}
+    )
+    password2 = serializers.CharField(
+        style={'input_type': 'password'}
+    )
+
+    class Meta:
+        model = User
+        fields = ('email', 'username', 'nickname', 'password', 'password2', )
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError('패스워드가 일치하지 않습니다')
+        return attrs
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(required=True)
+    class Meta:
+        model = UserProfile
+        fields = ('user', 'birth', 'language', )
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user_data = user_data
+        user = UserSerializer.create(UserSerializer(), validated_data=user_data)
+        user_profile = UserProfile.objects.create(user=user, birth=validated_data.pop('birth'), language=validated_data.pop('language'))
+
+        return user_profile
+
+    def update(self, instance, validated_data):
+        user_data = validated_data['user']
+        user = User.objects.get(id=instance.user_id)
+        UserSerializer.update(UserSerializer(), instance=user, validated_data=user_data)
+
+        instance.birth = validated_data.get('birth', instance.birth)
+        instance.language = validated_data.get('language', instance.language)
+        instance.save()
+
+        return instance
+
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FriendRequest
+        fields = '__all__'
