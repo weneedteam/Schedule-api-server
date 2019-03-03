@@ -1,3 +1,19 @@
 from django.db import models
 
-# Create your models here.
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
+
+class Schedule(models.Model):
+    registrant = models.ForeignKey(User, on_delete=models.PROTECT, related_name='schedule_registrant')
+    participants = models.ManyToManyField(User, related_name='schedule_participants')
+    title = models.CharField(max_length=300)
+    state = models.IntegerField(default=0)
+    start_time = models.DateTimeField()
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    content = models.CharField(max_length=1000, null=True, blank=True)
+
+    def __str__(self):
+        return self.title
