@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_swagger',
     'rest_auth',
+    'fcm_django',
 
     'django.contrib.sites',
     'allauth',

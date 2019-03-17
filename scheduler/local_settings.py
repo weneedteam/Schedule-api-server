@@ -1,5 +1,5 @@
 DEBUG = True
-API_KEY = 'e545a89a-eeda-4769-aade-8afad754bece'
+API_KEY = '4NNhOzwHv42V9NDEWqxgtwK%2ByG8alZCPfxyVk%2FCM9M%2FoZN1z2kchtGdrZ0qI8rm6R8sEIQaVFjUJA0S%2FlBFBFw%3D%3D'
 DATABASE_NAME = 'schedule_prod'
 DATABASE_USER = 'root'
 DATABASE_PASSWORD = 'whgusdnr12'
