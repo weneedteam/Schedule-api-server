@@ -4,6 +4,12 @@ from .models import UserProfile, User, FriendRequest
 
 
 class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'username', 'nickname', )
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         style={'input_type': 'password'}
     )
@@ -13,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'nickname', 'password', 'password2', )
+        fields = ('id', 'email', 'username', 'nickname', 'password', 'password2', )
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -27,14 +33,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ('user', 'birth', 'language', )
 
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user_data = user_data
-        user = UserSerializer.create(UserSerializer(), validated_data=user_data)
-        user_profile = UserProfile.objects.create(user=user, birth=validated_data.pop('birth'), language=validated_data.pop('language'))
-
-        return user_profile
-
     def update(self, instance, validated_data):
         user_data = validated_data['user']
         user = User.objects.get(id=instance.user_id)
@@ -47,7 +45,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
+class UserProfileCreateSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer(required=True)
+    class Meta:
+        model = UserProfile
+        fields = ('user', 'birth', 'language', )
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user = UserCreateSerializer.create(UserCreateSerializer(), validated_data=user_data)
+        user_profile = UserProfile.objects.create(user=user, birth=validated_data['birth'], language=validated_data['language'])
+
+        return user_profile
+
+
 class FriendRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = FriendRequest
-        fields = '__all__'
+        fields = ('request_user', 'response_user', )
