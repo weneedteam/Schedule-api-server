@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_swagger',
     'rest_auth',
-    'fcm_django',
 
     'django.contrib.sites',
     'allauth',
@@ -173,4 +172,5 @@ import datetime
 
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=30),
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'member.jwt_response.jwt_response_payload_handler',
 }
