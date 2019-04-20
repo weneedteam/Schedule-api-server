@@ -18,6 +18,7 @@ RUN apt-get update && \
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
+COPY requirements ./requirements
 RUN pip3 install -r requirements.txt
 
 # add (the rest of) our code
