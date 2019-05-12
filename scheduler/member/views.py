@@ -1,14 +1,18 @@
 from django.utils import timezone
+from django.utils.datastructures import MultiValueDictKeyError
 
 from django.db.models import Q
 
 from .models import UserProfile, User, FriendRequest
 
-from .serializers import UserProfileSerializer, UserProfileCreateSerializer, FriendRequestSerializer
+from .serializers import UserProfileSerializer, UserProfileCreateSerializer, FriendRequestSerializer, EmailValidateSerializer, NicknameValidateSerializer
+
+from .exceptions import *
 
 from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
+from rest_framework.exceptions import ValidationError
 
 
 class UserProfileViewSet(viewsets.GenericViewSet,
@@ -89,32 +93,42 @@ class UserProfileViewSet(viewsets.GenericViewSet,
 
 @api_view(['POST'])
 def user_email_validate(request):
-    email = request.POST.get('email')
+    serializer = EmailValidateSerializer(data=request.data)
     try:
-        User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({
-            'message': '이메일 사용 가능'
-        }, status=status.HTTP_409_CONFLICT)
+        serializer.is_valid(raise_exception=True)
+    except ValidationError:
+        if serializer.errors['email'][0] == "user with this email already exists.":
+            raise EmailUnique()
+        elif serializer.errors['email'][0] == "Enter a valid email address.":
+            raise EmailInvalid()
+        elif serializer.errors['email'][0] == "This field is required.":
+            raise EmailRequired()
     else:
-        return Response({
-            'message': '이메일 사용 중'
-        }, status=status.HTTP_200_OK)
+        raise EmailUseful()
+
+    return Response({
+        "message": "예상치 못한 오류"
+    }, status=status.HTTP_417_EXPECTATION_FAILED)
 
 
 @api_view(['POST'])
 def user_nickname_validate(request):
-    nickname = request.POST.get('nickname')
+    serializer = NicknameValidateSerializer(data=request.data)
     try:
-        User.objects.get(nickname=nickname)
-    except User.DoesNotExist:
-        return Response({
-            'message': '닉네임 사용 가능'
-        }, status=status.HTTP_409_CONFLICT)
+        serializer.is_valid(raise_exception=True)
+    except ValidationError:
+        if serializer.errors['nickname'][0] == "user with this nickname already exists.":
+            raise NicknameUnique()
+        elif serializer.errors['nickname'][0] == "This field is required.":
+            raise NicknameRequired()
+        elif serializer.errors['nickname'][0] == "Ensure this field has no more than 30 characters.":
+            raise NicknameMaxLength()
     else:
-        return Response({
-            'message': '닉네임 사용 중'
-        }, status=status.HTTP_200_OK)
+        raise NicknameUseful()
+
+    return Response({
+        "message": "예상치 못한 오류"
+    }, status=status.HTTP_417_EXPECTATION_FAILED)
 
 
 class FriendRequestViewSet(viewsets.GenericViewSet,

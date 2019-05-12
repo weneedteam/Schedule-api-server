@@ -63,3 +63,15 @@ class FriendRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = FriendRequest
         fields = ('request_user', 'response_user', )
+
+
+class EmailValidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('email', )
+
+
+class NicknameValidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('nickname', )
