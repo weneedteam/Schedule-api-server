@@ -1,4 +1,4 @@
-DEBUG = True
+DEBUG = False
 API_KEY = '4NNhOzwHv42V9NDEWqxgtwK%2ByG8alZCPfxyVk%2FCM9M%2FoZN1z2kchtGdrZ0qI8rm6R8sEIQaVFjUJA0S%2FlBFBFw%3D%3D'
 DATABASE_NAME = 'schedule_prod'
 DATABASE_USER = 'root'
