@@ -8,10 +8,10 @@ class EmailInvalid(APIException):
     default_code = "email_invalid"
 
 
-class EmailRequired(APIException):
+class EmailBlank(APIException):
     status_code = status.HTTP_202_ACCEPTED
     default_detail = "이메일 값이 비어있습니다."
-    default_code = "email_required"
+    default_code = "email_blank"
 
 
 class EmailUnique(APIException):
@@ -26,10 +26,10 @@ class EmailUseful(APIException):
     default_code = "email_useful"
 
 
-class NicknameRequired(APIException):
+class NicknameBlank(APIException):
     status_code = status.HTTP_202_ACCEPTED
     default_detail = "닉네임 값이 비어있습니다."
-    default_code = "nickname_required"
+    default_code = "nickname_blank"
 
 
 class NicknameMaxLength(APIException):

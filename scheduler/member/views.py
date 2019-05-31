@@ -1,5 +1,4 @@
 from django.utils import timezone
-from django.utils.datastructures import MultiValueDictKeyError
 
 from django.db.models import Q
 
@@ -91,9 +90,12 @@ class UserProfileViewSet(viewsets.GenericViewSet,
             }, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 def user_email_validate(request):
-    serializer = EmailValidateSerializer(data=request.data)
+    data = {
+        "email": request.GET.get('email')
+    }
+    serializer = EmailValidateSerializer(data=data)
     try:
         serializer.is_valid(raise_exception=True)
     except ValidationError:
@@ -101,8 +103,8 @@ def user_email_validate(request):
             raise EmailUnique()
         elif serializer.errors['email'][0] == "Enter a valid email address.":
             raise EmailInvalid()
-        elif serializer.errors['email'][0] == "This field is required.":
-            raise EmailRequired()
+        elif serializer.errors['email'][0] == "This field may not be blank.":
+            raise EmailBlank()
     else:
         raise EmailUseful()
 
@@ -111,16 +113,20 @@ def user_email_validate(request):
     }, status=status.HTTP_417_EXPECTATION_FAILED)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 def user_nickname_validate(request):
-    serializer = NicknameValidateSerializer(data=request.data)
+    data = {
+        "nickname": request.GET.get('nickname', "")
+    }
+    serializer = NicknameValidateSerializer(data=data)
     try:
         serializer.is_valid(raise_exception=True)
     except ValidationError:
+        print(serializer.errors)
         if serializer.errors['nickname'][0] == "user with this nickname already exists.":
             raise NicknameUnique()
-        elif serializer.errors['nickname'][0] == "This field is required.":
-            raise NicknameRequired()
+        elif serializer.errors['nickname'][0] == "This field may not be blank.":
+            raise NicknameBlank()
         elif serializer.errors['nickname'][0] == "Ensure this field has no more than 30 characters.":
             raise NicknameMaxLength()
     else:
