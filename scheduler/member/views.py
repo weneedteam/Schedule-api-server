@@ -122,7 +122,6 @@ def user_nickname_validate(request):
     try:
         serializer.is_valid(raise_exception=True)
     except ValidationError:
-        print(serializer.errors)
         if serializer.errors['nickname'][0] == "user with this nickname already exists.":
             raise NicknameUnique()
         elif serializer.errors['nickname'][0] == "This field may not be blank.":

@@ -9,7 +9,7 @@ class EmailInvalid(APIException):
 
 
 class EmailBlank(APIException):
-    status_code = status.HTTP_202_ACCEPTED
+    status_code = status.HTTP_404_NOT_FOUND
     default_detail = "이메일 값이 비어있습니다."
     default_code = "email_blank"
 
@@ -27,7 +27,7 @@ class EmailUseful(APIException):
 
 
 class NicknameBlank(APIException):
-    status_code = status.HTTP_202_ACCEPTED
+    status_code = status.HTTP_404_NOT_FOUND
     default_detail = "닉네임 값이 비어있습니다."
     default_code = "nickname_blank"
 
