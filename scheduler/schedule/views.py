@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.contrib.auth import get_user_model
 
-from .models import Schedule
-from .serializers import ScheduleSerializer
+from .models import Schedule, Holiday
+from .serializers import ScheduleSerializer, HolidaySerializer
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
@@ -60,3 +60,16 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 'status': 200,
                 'message': '일정에 user 추가',
             }, status=status.HTTP_200_OK)
+
+
+class HolidayViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    queryset = Holiday.objects.all().filter(is_holiday=True)
+    serializer_class = HolidaySerializer
+
+    @action(detail=False, methods=['GET'])
+    def filter(self, request):
+        year = request.GET.get('year')
+        holidays = Holiday.objects.all().filter(is_holiday=True, date__year=year)
+        serializer = HolidaySerializer(holidays, many=True)
+
+        return Response(serializer.data)
