@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth import get_user_model
 
 from .models import Schedule, Holiday
-from .serializers import ScheduleSerializer, HolidaySerializer
+from .serializers import ScheduleCreateSerializer, ScheduleListSerializer, HolidaySerializer
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
@@ -17,7 +17,7 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                       mixins.CreateModelMixin,
                       mixins.DestroyModelMixin):
     queryset = Schedule.objects.all()
-    serializer_class = ScheduleSerializer
+    serializer_class = ScheduleCreateSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -105,6 +105,28 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 'success': False,
                 'data': {
                     'message': '해당 일정을 찾을 수 없습니다.'
+                }
+            })
+
+    @action(detail=False, methods=['GET'])
+    def filter(self, request):
+        user_id = request.GET.get('id')
+        schedules = Schedule.objects.filter(participants=user_id)
+
+        if schedules:
+            serializer = ScheduleListSerializer(schedules, many=True)
+
+            return Response({
+                "success": True,
+                "data": {
+                    "schedules": serializer.data
+                }
+            })
+        else:
+            return Response({
+                "success": True,
+                "data": {
+                    "message": "참여 중인 일정이 없습니다."
                 }
             })
 
