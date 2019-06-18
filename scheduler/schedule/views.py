@@ -38,10 +38,9 @@ class ScheduleViewSet(viewsets.GenericViewSet,
 
     @action(detail=True, methods=['GET'])
     def join(self, request, pk=None):
-        user = get_user_model()
         participant_id = request.GET.get('id')
         try:
-            participant = User.objects.get(id=participant_id)
+            participant = User.objects.get(pk=participant_id)
             Schedule.objects.get(pk=pk, participants=participant)
             return Response({
                 'status': 200,
@@ -49,7 +48,7 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             }, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({
-                'status': 200,
+                'status': 400,
                 'message': '일정에 추가할 user의 id를 입력해주세요',
             }, status=status.HTTP_200_OK)
         except Schedule.DoesNotExist:
@@ -60,6 +59,54 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 'status': 200,
                 'message': '일정에 user 추가',
             }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['GET'])
+    def leave(self, request, pk=None):
+        schedule = Schedule.objects.get(pk=pk)
+        participant_id = request.GET.get('id')
+        try:
+            try:
+                Schedule.objects.get(pk=pk, participants=participant_id)
+            except Schedule.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'data': {
+                        'message': '해당 일정에 참가하고 있지 않습니다.'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            participant = User.objects.get(pk=participant_id)
+            if participant.id == schedule.registrant_id:
+                Schedule.objects.filter(pk=pk).delete()
+
+                return Response({
+                    'success': True,
+                    'data': {
+                        'message': '일정 삭제 완료'
+                    }
+                }, status=status.HTTP_200_OK)
+            else:
+                schedule.participants.remove(participant)
+
+                return Response({
+                    'success': True,
+                    'data': {
+                        'message': '일정 나가기 완료'
+                    }
+                }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': '해당 유저를 찾을 수 없습니다.'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Schedule.DoesNotExist:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': '해당 일정을 찾을 수 없습니다.'
+                }
+            })
 
 
 class HolidayViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
