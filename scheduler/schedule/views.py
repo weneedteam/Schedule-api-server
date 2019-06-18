@@ -132,13 +132,21 @@ class ScheduleViewSet(viewsets.GenericViewSet,
 
 
 class HolidayViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
-    queryset = Holiday.objects.all().filter(is_holiday=True)
+    queryset = Holiday.objects.filter(is_holiday=True)
     serializer_class = HolidaySerializer
 
-    @action(detail=False, methods=['GET'])
-    def filter(self, request):
+    def list(self, request, *args, **kwargs):
         year = request.GET.get('year')
-        holidays = Holiday.objects.all().filter(is_holiday=True, date__year=year)
-        serializer = HolidaySerializer(holidays, many=True)
 
+        if year:
+            queryset = self.filter_queryset(self.get_queryset()).filter(date__year=year)
+        else:
+            queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
