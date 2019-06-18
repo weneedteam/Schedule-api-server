@@ -89,6 +89,27 @@ class UserProfileViewSet(viewsets.GenericViewSet,
                 'user': user_data,
             }, status=status.HTTP_200_OK)
 
+    @action(detail=True)
+    def friend_list(self, request, pk=None):
+        try:
+            user = UserProfile.objects.get(user__id=pk)
+        except UserProfile.DoesNotExist:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': 'User not found'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        friends_serializer = user.friends.values_list('pk', flat=True)
+
+        return Response({
+            'success': True,
+            'data': {
+                'friends': friends_serializer
+            }
+        }, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 def user_email_validate(request):
@@ -190,27 +211,3 @@ class FriendRequestViewSet(viewsets.GenericViewSet,
             return Response({
                 'message': '친구 요청 수락',
             }, status=status.HTTP_200_OK)
-
-    @action(detail=True)
-    def friend_list(self, request, pk=None):
-        try:
-            user = UserProfile.objects.get(user__id=pk)
-        except UserProfile.DoesNotExist:
-            return Response({
-                'success': False,
-                'data': {
-                    'message': 'User not found'
-                }
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        friends_serializer = []
-
-        for friend in user.friends.all():
-            friends_serializer.append(friend.pk)
-
-        return Response({
-            'success': True,
-            'data': {
-                'friends': friends_serializer
-            }
-        }, status=status.HTTP_200_OK)
