@@ -79,7 +79,7 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             participant_id = request.GET.get('id')
             schedule = Schedule.objects.get(pk=pk)
 
-            if not schedule.participants.filter(pk=participant_id):
+            if not schedule.participants.filter(pk=participant_id).exists():
                 return Response({
                     'success': False,
                     'data': {
