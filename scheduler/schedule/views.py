@@ -38,45 +38,59 @@ class ScheduleViewSet(viewsets.GenericViewSet,
 
     @action(detail=True, methods=['GET'])
     def join(self, request, pk=None):
-        participant_id = request.GET.get('id')
         try:
+            participant_id = request.GET.get('id')
             participant = User.objects.get(pk=participant_id)
             Schedule.objects.get(pk=pk, participants=participant)
             return Response({
-                'status': 200,
-                'message': '일정에 이미 참가 중인 유저',
-            }, status=status.HTTP_200_OK)
+                'success': False,
+                'data': {
+                    'message': '일정에 이미 참가 중인 유저'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
             return Response({
-                'status': 400,
-                'message': '일정에 추가할 user의 id를 입력해주세요',
-            }, status=status.HTTP_200_OK)
+                'success': False,
+                'data': {
+                    'message': '일정에 추가할 user_id를 다시 확인해주세요.'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Schedule.DoesNotExist:
             instance = self.get_object()
             instance.participants.add(participant)
 
             return Response({
-                'status': 200,
-                'message': '일정에 user 추가',
+                'success': True,
+                'data': {
+                    'message': '일정에 user 추가'
+                }
             }, status=status.HTTP_200_OK)
+        except ValueError:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': '요청 형식에 맞지 않습니다.'
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['GET'])
     def leave(self, request, pk=None):
-        schedule = Schedule.objects.get(pk=pk)
-        participant_id = request.GET.get('id')
         try:
-            try:
-                Schedule.objects.get(pk=pk, participants=participant_id)
-            except Schedule.DoesNotExist:
+            participant_id = request.GET.get('id')
+            schedule = Schedule.objects.get(pk=pk)
+
+            participants_ids = [participant.pk for participant in schedule.participants.all()]
+            if not int(participant_id) in participants_ids:
                 return Response({
                     'success': False,
                     'data': {
                         'message': '해당 일정에 참가하고 있지 않습니다.'
                     }
                 }, status=status.HTTP_400_BAD_REQUEST)
+
             participant = User.objects.get(pk=participant_id)
             if participant.id == schedule.registrant_id:
-                Schedule.objects.filter(pk=pk).delete()
+                Schedule.objects.get(pk=pk).delete()
 
                 return Response({
                     'success': True,
@@ -106,7 +120,14 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 'data': {
                     'message': '해당 일정을 찾을 수 없습니다.'
                 }
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': '요청 형식에 맞지 않습니다.'
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=False, methods=['GET'])
     def filter(self, request):
@@ -138,10 +159,9 @@ class HolidayViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     def list(self, request, *args, **kwargs):
         year = request.GET.get('year')
 
+        queryset = self.filter_queryset(self.get_queryset())
         if year:
-            queryset = self.filter_queryset(self.get_queryset()).filter(date__year=year)
-        else:
-            queryset = self.filter_queryset(self.get_queryset())
+            queryset = queryset.filter(date__year=year)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
