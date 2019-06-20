@@ -112,21 +112,21 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 'data': {
                     'message': '해당 유저를 찾을 수 없습니다.'
                 }
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_404_NOT_FOUND)
         except Schedule.DoesNotExist:
             return Response({
                 'success': False,
                 'data': {
                     'message': '해당 일정을 찾을 수 없습니다.'
                 }
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_404_NOT_FOUND)
         except ValueError:
             return Response({
                 'success': False,
                 'data': {
                     'message': '요청 형식에 맞지 않습니다.'
                 }
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['GET'])
     def filter(self, request):
@@ -141,14 +141,14 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 "data": {
                     "schedules": serializer.data
                 }
-            })
+            }, status=status.HTTP_200_OK)
         else:
             return Response({
                 "success": True,
                 "data": {
                     "message": "참여 중인 일정이 없습니다."
                 }
-            })
+            }, status=status.HTTP_200_OK)
 
 
 class HolidayViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
