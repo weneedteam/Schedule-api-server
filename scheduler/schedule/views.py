@@ -89,7 +89,7 @@ class ScheduleViewSet(viewsets.GenericViewSet,
 
             participant = User.objects.get(pk=participant_id)
             if participant.id == schedule.registrant_id:
-                Schedule.objects.get(pk=pk).delete()
+                schedule.delete()
 
                 return Response({
                     'success': True,
