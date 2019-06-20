@@ -2,12 +2,13 @@ from django.shortcuts import render
 from django.contrib.auth import get_user_model
 
 from .models import Schedule, Holiday
-from .serializers import ScheduleCreateSerializer, ScheduleListSerializer, HolidaySerializer
+from .serializers import ScheduleSerializer, ScheduleCreateSerializer, HolidaySerializer
 from .permissions import IsOwner
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 
 User = get_user_model()
@@ -18,8 +19,13 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                       mixins.CreateModelMixin,
                       mixins.DestroyModelMixin):
     queryset = Schedule.objects.all()
-    serializer_class = ScheduleCreateSerializer
-    permission_classes = (IsOwner,)
+    permission_classes = (IsAuthenticated, IsOwner, )
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return ScheduleSerializer
+        else:
+            return ScheduleCreateSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -184,13 +190,67 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 }
             }, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=True, methods=['GET'])
+    def arrival(self, request, pk=None):
+        try:
+            user = request.GET.get('id')
+            instance = Schedule.objects.get(pk=pk)
+
+            if instance.arrival_member.filter(pk=user).exists():
+                return Response({
+                    'success': False,
+                    'data': {
+                        'message': '이미 도착한 유저입니다.'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if instance.participants.filter(pk=user).exists():
+                user = User.objects.get(pk=user)
+                instance.arrival_member.add(user)
+
+                return Response({
+                    'success': True,
+                    'data': {
+                        'user': user.pk,
+                        'message': '도착 완료'
+                    }
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'data': {
+                        'message': '해당 일정에 참가하고 있지 않습니다.'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Schedule.DoesNotExist:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': '해당 일정을 찾을 수 없습니다.'
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': '해당 유저를 찾을 수 없습니다.'
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
+        except ValueError:
+            return Response({
+                'sucess': False,
+                'data': {
+                    'message': '요청 형식에 맞지 않습니다.'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=['GET'])
     def filter(self, request):
         user_id = request.GET.get('id')
         schedules = Schedule.objects.filter(participants=user_id)
 
         if schedules:
-            serializer = ScheduleListSerializer(schedules, many=True)
+            serializer = ScheduleSerializer(schedules, many=True)
 
             return Response({
                 "success": True,

@@ -8,6 +8,7 @@ User = get_user_model()
 class Schedule(models.Model):
     registrant = models.ForeignKey(User, on_delete=models.PROTECT, related_name='schedule_registrant')
     participants = models.ManyToManyField(User, related_name='schedule_participants')
+    arrival_member = models.ManyToManyField(User, related_name='schedule_arrival_member')
     title = models.CharField(max_length=300)
     state = models.IntegerField(default=0)
     start_time = models.DateTimeField()
