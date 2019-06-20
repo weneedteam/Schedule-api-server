@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 from .models import Schedule, Holiday
 from .serializers import ScheduleCreateSerializer, ScheduleListSerializer, HolidaySerializer
+from .permissions import IsOwner
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
@@ -18,6 +19,7 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                       mixins.DestroyModelMixin):
     queryset = Schedule.objects.all()
     serializer_class = ScheduleCreateSerializer
+    permission_classes = (IsOwner,)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -127,6 +129,60 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                     'message': '요청 형식에 맞지 않습니다.'
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['POST'])
+    def expulsion(self, request, pk=None):
+        try:
+            obj = Schedule.objects.get(pk=pk)
+            self.check_object_permissions(self.request, obj)
+
+            user = request.GET.get('id')
+            if not obj.participants.filter(pk=user).exists():
+                return Response({
+                    'success': True,
+                    'data': {
+                        'message': '해당 일정에 참가하고 있지 않습니다.'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            user = User.objects.get(pk=user)
+            if obj.registrant_id == user.pk:
+                return Response({
+                    'success': False,
+                    'data': {
+                        'message': '일정 등록자는 추방시킬 수 없습니다.'
+                    }
+                })
+            else:
+                obj.participants.remove(user)
+                return Response({
+                    'success': True,
+                    'data': {
+                        'user': user.pk,
+                        'message': '해당 유저 일정에서 추방 완료'
+                    }
+                }, status=status.HTTP_200_OK)
+        except Schedule.DoesNotExist:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': '해당 일정을 찾을 수 없습니다.'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': '해당 유저를 찾을 수 없습니다.'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response({
+                'success': False,
+                'data': {
+                    'message': '요청 형식에 맞지 않습니다.'
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=False, methods=['GET'])
     def filter(self, request):
