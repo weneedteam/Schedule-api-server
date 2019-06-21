@@ -75,7 +75,7 @@ class ScheduleViewSet(viewsets.GenericViewSet,
     @action(detail=True, methods=['GET'])
     def leave(self, request, pk=None):
         try:
-            participant_id = request.GET.get('id')
+            participant_id = request.user.pk
             schedule = Schedule.objects.get(pk=pk)
 
             if not schedule.participants.filter(pk=participant_id).exists():
@@ -104,10 +104,6 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             response = responses.ScheduleNotFoundError
 
             return Response(response, status=status.HTTP_404_NOT_FOUND)
-        except ValueError:
-            response = responses.RequestFormatError
-
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['POST'])
     def expulsion(self, request, pk=None):
