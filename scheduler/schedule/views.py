@@ -39,10 +39,12 @@ class ScheduleViewSet(viewsets.GenericViewSet,
 
         headers = self.get_success_headers(serializer.data)
 
-        response = responses.ScheduleCreateSuccess
-        response['data']['schedule'] = serializer.data
-
-        return Response(response, status=status.HTTP_201_CREATED, headers=headers)
+        return Response({
+            'success': True,
+            'data': {
+                'schedule': serializer.data
+            }
+        }, status=status.HTTP_201_CREATED, headers=headers)
 
     # Todo: invite action 뷰 생성 (fcm 활용)
 
@@ -54,23 +56,23 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             Schedule.objects.get(pk=pk, participants=participant)
 
             response = responses.ScheduleUserAlreadyExistsError
-
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
             response = responses.UserNotFoundError
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
         except Schedule.DoesNotExist:
             instance = self.get_object()
             instance.participants.add(participant)
 
-            response = responses.ScheduleInviteSuccess
-            response['data']['user'] = participant.pk
-
-            return Response(response, status=status.HTTP_200_OK)
+            return Response({
+                'success': True,
+                'data': {
+                    'user_id': participant.pk,
+                    'message': '일정에 유저 추가 완료',
+                }
+            }, status=status.HTTP_200_OK)
         except ValueError:
             response = responses.RequestFormatError
 
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        return response
 
     @action(detail=True, methods=['GET'])
     def leave(self, request, pk=None):
@@ -81,29 +83,34 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             if not schedule.participants.filter(pk=participant_id).exists():
                 response = responses.ScheduleNotParticipantedError
 
-                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+                return response
 
             participant = User.objects.get(pk=participant_id)
             if participant.id == schedule.registrant_id:
                 schedule.delete()
-                response = responses.ScheduleDeleteSuccess
 
-                return Response(response, status=status.HTTP_200_OK)
+                return Response({
+                    'success': True,
+                    'data': {
+                        'message': '일정 삭제 완료'
+                    }
+                }, status=status.HTTP_200_OK)
             else:
                 schedule.participants.remove(participant)
 
-                response = responses.ScheduleLeaveSuccess
-                response['data']['user'] = participant.pk
-
-                return Response(response, status=status.HTTP_200_OK)
+                return Response({
+                    'success': True,
+                    'data': {
+                        'user_id': participant.pk,
+                        'message': '일정 나가기 완료'
+                    }
+                }, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             response = responses.UserNotFoundError
-
-            return Response(response, status=status.HTTP_404_NOT_FOUND)
         except Schedule.DoesNotExist:
             response = responses.ScheduleNotFoundError
 
-            return Response(response, status=status.HTTP_404_NOT_FOUND)
+        return response
 
     @action(detail=True, methods=['POST'])
     def expulsion(self, request, pk=None):
@@ -115,67 +122,62 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             if not obj.participants.filter(pk=user).exists():
                 response = responses.ScheduleNotParticipantedError
 
-                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+                return response
 
             user = User.objects.get(pk=user)
             if obj.registrant_id == user.pk:
                 response = responses.ScheduleExpulsionPermissionError
-
-                return Response(response, status=status.HTTP_400_BAD_REQUEST)
             else:
                 obj.participants.remove(user)
-                response = responses.ScheduleExpulsionSuccess
-                response.data['user'] = user.pk
 
-                return Response(response, status=status.HTTP_200_OK)
+                return Response({
+                    'success': True,
+                    'data': {
+                        'user_id': user.pk,
+                        'message': '해당 유저 일정에서 추방 완료'
+                    }
+                }, status=status.HTTP_200_OK)
         except Schedule.DoesNotExist:
             response = responses.ScheduleNotFoundError
-
-            return Response(response, status=status.HTTP_404_NOT_FOUND)
         except User.DoesNotExist:
             response = responses.UserNotFoundError
-
-            return Response(response, status=status.HTTP_404_NOT_FOUND)
         except ValueError:
             response = responses.RequestFormatError
 
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        return response
 
     @action(detail=True, methods=['GET'])
     def arrival(self, request, pk=None):
         try:
-            user = request.GET.get('id')
+            user = request.user
             instance = Schedule.objects.get(pk=pk)
 
-            if instance.arrival_member.filter(pk=user).exists():
+            if instance.arrival_member.filter(pk=user.pk).exists():
                 response = responses.ScheduleUserAlreadyArrivalError
 
-                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+                return response
 
-            if instance.participants.filter(pk=user).exists():
-                user = User.objects.get(pk=user)
+            if instance.participants.filter(pk=user.pk).exists():
+                user = User.objects.get(pk=user.pk)
                 instance.arrival_member.add(user)
 
-                response = responses.ScheduleArrivalSuccess
-                response['data']['user'] = user.pk
-
-                return Response(response, status=status.HTTP_200_OK)
+                return Response({
+                    'success': True,
+                    'data': {
+                        'user_id': user.pk,
+                        'message': '일정 도착 완료'
+                    }
+                }, status=status.HTTP_200_OK)
             else:
                 response = responses.ScheduleNotParticipantedError
 
-                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+                return response
         except Schedule.DoesNotExist:
             response = responses.ScheduleNotFoundError
-
-            return Response(response, status=status.HTTP_404_NOT_FOUND)
         except User.DoesNotExist:
             response = responses.UserNotFoundError
 
-            return Response(response, status=status.HTTP_404_NOT_FOUND)
-        except ValueError:
-            response = responses.RequestFormatError
-
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        return response
 
     @action(detail=False, methods=['GET'])
     def filter(self, request):
@@ -185,14 +187,20 @@ class ScheduleViewSet(viewsets.GenericViewSet,
         if schedules:
             serializer = ScheduleSerializer(schedules, many=True)
 
-            response = responses.ScheduleFilterListSuccess
-            response['data']['schedules'] = serializer.data
-
-            return Response(response, status=status.HTTP_200_OK)
+            return Response({
+                'success': True,
+                'data': {
+                    'message': '참여하고 있는 일정 불러오기 완료',
+                    'schedules': serializer.data
+                }
+            }, status=status.HTTP_200_OK)
         else:
-            response = responses.ScheduleFilterEmptySuccess
-
-            return Response(response, status=status.HTTP_200_OK)
+            return Response({
+                'success': True,
+                'data': {
+                    'message': '참여 중인 일정이 없습니다.'
+                }
+            }, status=status.HTTP_200_OK)
 
 
 class HolidayViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -217,4 +225,10 @@ class HolidayViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         response = responses.HolidayListSuccess
         response['data']['holidays'] = serializer.data
 
-        return Response(response, status=status.HTTP_200_OK)
+        return Response({
+            'success': True,
+            'data': {
+                'message': '휴일 리스트 불러오기 완료',
+                'holidays': serializer.data
+            }
+        }, status=status.HTTP_200_OK)
