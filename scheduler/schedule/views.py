@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from .models import Schedule, Holiday
 from .serializers import ScheduleSerializer, ScheduleCreateSerializer, HolidaySerializer
 from .permissions import IsOwner
-from . import responses
+from . import exceptions
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
@@ -13,6 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 
 
 User = get_user_model()
+
 
 class ScheduleViewSet(viewsets.GenericViewSet,
                       mixins.RetrieveModelMixin,
@@ -55,9 +56,9 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             participant = User.objects.get(pk=participant_id)
             Schedule.objects.get(pk=pk, participants=participant)
 
-            response = responses.ScheduleUserAlreadyExistsError
+            raise exceptions.ScheduleUserAlreadyExistsException
         except User.DoesNotExist:
-            response = responses.UserNotFoundError
+            raise exceptions.UserNotFoundException
         except Schedule.DoesNotExist:
             instance = self.get_object()
             instance.participants.add(participant)
@@ -70,9 +71,7 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 }
             }, status=status.HTTP_200_OK)
         except ValueError:
-            response = responses.RequestFormatError
-
-        return response
+            raise exceptions.RequestFormatException
 
     @action(detail=True, methods=['GET'])
     def leave(self, request, pk=None):
@@ -81,9 +80,7 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             schedule = Schedule.objects.get(pk=pk)
 
             if not schedule.participants.filter(pk=participant_id).exists():
-                response = responses.ScheduleNotParticipantedError
-
-                return response
+                raise exceptions.ScheduleNotParticipantException
 
             participant = User.objects.get(pk=participant_id)
             if participant.id == schedule.registrant_id:
@@ -106,11 +103,9 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                     }
                 }, status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            response = responses.UserNotFoundError
+            raise exceptions.UserNotFoundException
         except Schedule.DoesNotExist:
-            response = responses.ScheduleNotFoundError
-
-        return response
+            raise exceptions.ScheduleNotFoundException
 
     @action(detail=True, methods=['POST'])
     def expulsion(self, request, pk=None):
@@ -118,15 +113,13 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             obj = Schedule.objects.get(pk=pk)
             self.check_object_permissions(self.request, obj)
 
-            user = request.GET.get('id')
-            if not obj.participants.filter(pk=user).exists():
-                response = responses.ScheduleNotParticipantedError
+            user_id = request.GET.get('id')
+            if not obj.participants.filter(pk=user_id).exists():
+                raise exceptions.ScheduleNotParticipantException
 
-                return response
-
-            user = User.objects.get(pk=user)
+            user = User.objects.get(pk=user_id)
             if obj.registrant_id == user.pk:
-                response = responses.ScheduleExpulsionPermissionError
+                raise exceptions.ScheduleExpulsionPermissionException
             else:
                 obj.participants.remove(user)
 
@@ -138,13 +131,11 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                     }
                 }, status=status.HTTP_200_OK)
         except Schedule.DoesNotExist:
-            response = responses.ScheduleNotFoundError
+            raise exceptions.ScheduleNotFoundException
         except User.DoesNotExist:
-            response = responses.UserNotFoundError
+            raise exceptions.UserNotFoundException
         except ValueError:
-            response = responses.RequestFormatError
-
-        return response
+            raise exceptions.RequestFormatException
 
     @action(detail=True, methods=['GET'])
     def arrival(self, request, pk=None):
@@ -153,9 +144,7 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             instance = Schedule.objects.get(pk=pk)
 
             if instance.arrival_member.filter(pk=user.pk).exists():
-                response = responses.ScheduleUserAlreadyArrivalError
-
-                return response
+                raise exceptions.ScheduleUserAlreadyArrivalException
 
             if instance.participants.filter(pk=user.pk).exists():
                 user = User.objects.get(pk=user.pk)
@@ -169,15 +158,11 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                     }
                 }, status=status.HTTP_200_OK)
             else:
-                response = responses.ScheduleNotParticipantedError
-
-                return response
+                raise exceptions.ScheduleNotParticipantException
         except Schedule.DoesNotExist:
-            response = responses.ScheduleNotFoundError
+            raise exceptions.ScheduleNotFoundException
         except User.DoesNotExist:
-            response = responses.UserNotFoundError
-
-        return response
+            raise exceptions.UserNotFoundException
 
     @action(detail=False, methods=['GET'])
     def filter(self, request):
@@ -221,9 +206,6 @@ class HolidayViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-
-        response = responses.HolidayListSuccess
-        response['data']['holidays'] = serializer.data
 
         return Response({
             'success': True,
