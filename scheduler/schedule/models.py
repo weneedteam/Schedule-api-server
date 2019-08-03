@@ -1,9 +1,9 @@
 from django.db import models
-
 from django.contrib.auth import get_user_model
 
 
 User = get_user_model()
+
 
 class Schedule(models.Model):
     registrant = models.ForeignKey(User, on_delete=models.PROTECT, related_name='schedule_registrant')
