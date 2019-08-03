@@ -113,12 +113,11 @@ class ScheduleViewSet(viewsets.GenericViewSet,
             obj = Schedule.objects.get(pk=pk)
             self.check_object_permissions(self.request, obj)
 
-            user_id = request.GET.get('id')
-            if not obj.participants.filter(pk=user_id).exists():
+            user = User.objects.get(pk=request.GET.get('id'))
+            if not obj.participants.filter(pk=user.id).exists():
                 raise exceptions.ScheduleNotParticipantException
 
-            user = User.objects.get(pk=user_id)
-            if obj.registrant_id == user.pk:
+            if obj.registrant == user:
                 raise exceptions.ScheduleExpulsionPermissionException
             else:
                 obj.participants.remove(user)
@@ -147,7 +146,6 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 raise exceptions.ScheduleUserAlreadyArrivalException
 
             if instance.participants.filter(pk=user.pk).exists():
-                user = User.objects.get(pk=user.pk)
                 instance.arrival_member.add(user)
 
                 return Response({
