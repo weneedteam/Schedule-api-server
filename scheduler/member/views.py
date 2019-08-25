@@ -90,7 +90,7 @@ class UserProfileViewSet(mixins.CreateModelMixin,
                 'user': user_data,
             }, status=status.HTTP_200_OK)
 
-    @action(detail=True)
+    @action(methods=['GET'], detail=True, url_path='friend-list')
     def friend_list(self, request, pk=None):
         try:
             user = UserProfile.objects.get(user__id=pk)
@@ -102,7 +102,7 @@ class UserProfileViewSet(mixins.CreateModelMixin,
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        friends_serializer = user.friends.values_list('pk', flat=True)
+        friends_serializer = user.friends.values('id', 'username', 'nickname')
 
         return Response({
             'success': True,
