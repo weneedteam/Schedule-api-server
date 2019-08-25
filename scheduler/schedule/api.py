@@ -6,9 +6,10 @@ from django.conf import settings
 from .models import Holiday
 
 
-class HolidayAPI():
+class HolidayAPI(object):
     def __init__(self):
-        self.holiday_base_url = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/{holiday_kinds}?solYear={year}&solMonth={month}&ServiceKey=%s" % settings.API_KEY
+        self.holiday_base_url = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/{holiday_kinds}?"\
+                                "solYear={year}&solMonth={month}&ServiceKey=%s" % settings.API_KEY
         self.parse_category = ["getHoliDeInfo", "getRestDeInfo", "get24DivisionsInfo", "getSundryDayInfo", ]
 
     def __call__(self, *args, **kwargs):
@@ -21,7 +22,13 @@ class HolidayAPI():
             for month in range(1, 13):
                 month = str(month).zfill(2)
 
-                response = requests.get(self.holiday_base_url.format(holiday_kinds=holiday_kinds, year=year, month=month))
+                response = requests.get(
+                    self.holiday_base_url.format(
+                        holiday_kinds=holiday_kinds,
+                        year=year,
+                        month=month
+                    )
+                )
                 root = ElementTree.fromstring(response.text)
                 items = root.iter('item')
 

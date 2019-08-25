@@ -13,4 +13,9 @@ class Notify:
         self.registration_ids = registration_ids
 
     def notify_device(self):
-        self.push_service.notify_multiple_devices(registration_ids=self.registration_ids, message_title=self.message_title, message_body=self.message_body, data_message=self.data_message)
+        self.push_service.notify_multiple_devices(
+            registration_ids=self.registration_ids,
+            message_title=self.message_title,
+            message_body=self.message_body,
+            data_message=self.data_message
+        )

@@ -4,7 +4,8 @@ from django.db.models import Q
 
 from .models import UserProfile, User, FriendRequest
 
-from .serializers import UserProfileSerializer, UserProfileCreateSerializer, FriendRequestSerializer, EmailValidateSerializer, NicknameValidateSerializer
+from .serializers import UserProfileSerializer, UserProfileCreateSerializer, FriendRequestSerializer, \
+    EmailValidateSerializer, NicknameValidateSerializer
 
 from .exceptions import *
 
@@ -14,11 +15,11 @@ from rest_framework.decorators import action, api_view
 from rest_framework.exceptions import ValidationError
 
 
-class UserProfileViewSet(viewsets.GenericViewSet,
-                         mixins.CreateModelMixin,
+class UserProfileViewSet(mixins.CreateModelMixin,
                          mixins.RetrieveModelMixin,
                          mixins.UpdateModelMixin,
-                         mixins.DestroyModelMixin):
+                         mixins.DestroyModelMixin,
+                         viewsets.GenericViewSet):
     queryset = UserProfile.objects.all()
 
     def get_serializer_class(self):
@@ -157,10 +158,10 @@ def user_nickname_validate(request):
     }, status=status.HTTP_417_EXPECTATION_FAILED)
 
 
-class FriendRequestViewSet(viewsets.GenericViewSet,
-                           mixins.CreateModelMixin,
+class FriendRequestViewSet(mixins.CreateModelMixin,
                            mixins.RetrieveModelMixin,
-                           mixins.DestroyModelMixin):
+                           mixins.DestroyModelMixin,
+                           viewsets.GenericViewSet):
     queryset = FriendRequest.objects.all()
     serializer_class = FriendRequestSerializer
 
@@ -171,8 +172,10 @@ class FriendRequestViewSet(viewsets.GenericViewSet,
             }, status=status.HTTP_409_CONFLICT)
 
         try:
-            friend_request = FriendRequest.objects.get(Q(request_user=request.data['response_user'], response_user=request.data['request_user'])
-                                                       | Q(request_user=request.data['request_user'], response_user=request.data['response_user']))
+            friend_request = FriendRequest.objects.get(
+                Q(request_user=request.data['response_user'], response_user=request.data['request_user'])
+                | Q(request_user=request.data['request_user'], response_user=request.data['response_user'])
+            )
         except FriendRequest.DoesNotExist:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)

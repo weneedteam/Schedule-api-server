@@ -159,8 +159,6 @@ class ScheduleViewSet(viewsets.GenericViewSet,
                 raise exceptions.ScheduleNotParticipantException
         except Schedule.DoesNotExist:
             raise exceptions.ScheduleNotFoundException
-        except User.DoesNotExist:
-            raise exceptions.UserNotFoundException
 
     @action(detail=False, methods=['GET'])
     def filter(self, request):

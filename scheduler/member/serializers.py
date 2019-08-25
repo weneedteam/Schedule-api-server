@@ -29,11 +29,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(required=True)
+
     class Meta:
         model = UserProfile
         fields = ('user', 'birth', 'language', )
 
-    def update(self, instance, validated_data):
+    def update(self, instance: UserProfile, validated_data):
         user_data = validated_data['user']
         user = User.objects.get(id=instance.user_id)
         UserSerializer.update(UserSerializer(), instance=user, validated_data=user_data)
@@ -47,6 +48,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserProfileCreateSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer(required=True)
+
     class Meta:
         model = UserProfile
         fields = ('user', 'birth', 'language', )
@@ -54,7 +56,11 @@ class UserProfileCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = UserCreateSerializer.create(UserCreateSerializer(), validated_data=user_data)
-        user_profile = UserProfile.objects.create(user=user, birth=validated_data['birth'], language=validated_data['language'])
+        user_profile = UserProfile.objects.create(
+            user=user,
+            birth=validated_data['birth'],
+            language=validated_data['language']
+        )
 
         return user_profile
 
