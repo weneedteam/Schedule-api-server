@@ -38,7 +38,7 @@ urlpatterns = [
     path('api-token-auth/', obtain_jwt_token),
     path('api-token-verify/', verify_jwt_token),
 
-    path('v1/user/', include('member.urls')),
+    path('v1/member/', include('member.urls')),
     path('v1/schedule/', include('schedule.urls')),
 ]
 

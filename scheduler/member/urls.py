@@ -6,8 +6,8 @@ from .views import UserProfileViewSet, FriendRequestViewSet, user_email_validate
 
 
 router = DefaultRouter()
-router.register('user', UserProfileViewSet)
-router.register('friend-request', FriendRequestViewSet)
+router.register('users', UserProfileViewSet)
+router.register('friends', FriendRequestViewSet)
 
 urlpatterns = [
     path('email-validate/', user_email_validate),
