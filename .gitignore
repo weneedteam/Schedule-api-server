@@ -7,4 +7,4 @@ log/
 .idea/
 db.sqlite3
 .mypy*
-
+static/
