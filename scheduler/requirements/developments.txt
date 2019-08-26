@@ -3,5 +3,5 @@ django-debug-toolbar==1.11
 django-extensions==2.1.5
 ipython==7.2.0
 notebook>=5.7.8
-
+Werkzeug>=0.15.5
 
