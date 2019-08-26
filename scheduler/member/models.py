@@ -26,6 +26,9 @@ class UserProfile(models.Model):
     language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default="KR", null=False)
     friends = models.ManyToManyField(User, related_name='userProfile_friends')
 
+    def get_friends(self, *args, **kwargs):
+        return self.friends.filter(**kwargs).values('id', 'username', 'nickname', *args)
+
 
 class FriendRequest(models.Model):
     request_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_request_user')
@@ -36,3 +39,18 @@ class FriendRequest(models.Model):
 
     def __str__(self):
         return "{} -> {}" .format(self.request_user, self.response_user)
+
+    @classmethod
+    def get_friend_request_list(cls, **kwargs):
+        kwargs.pop('assent', None)
+        user_columns = ['id', 'username', 'nickname']
+        args = []
+        if 'request_user' in kwargs:
+            for c in user_columns:
+                args.append("request_user__%s" % c)
+
+        if 'response_user' in kwargs:
+            for c in user_columns:
+                args.append("response_user__%s" % c)
+
+        return cls.objects.filter(assent=False, **kwargs).values(*args)
