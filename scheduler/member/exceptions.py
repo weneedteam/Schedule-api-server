@@ -2,6 +2,12 @@ from rest_framework.exceptions import APIException
 from rest_framework import status
 
 
+class DosNotExistUserException(APIException):
+    status = status.HTTP_404_NOT_FOUND
+    default_detail = "유저를 찾을 수 없습니다."
+    default_code = "not_found_user"
+
+
 class EmailInvalid(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = "이메일이 형식에 맞지 않습니다."

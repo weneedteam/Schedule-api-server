@@ -5,7 +5,7 @@ from django.db.models import Q
 from .models import UserProfile, User, FriendRequest
 
 from .serializers import UserProfileSerializer, UserProfileCreateSerializer, FriendRequestSerializer, \
-    EmailValidateSerializer, NicknameValidateSerializer
+    EmailValidateSerializer, NicknameValidateSerializer, UserSerializer
 
 from .exceptions import *
 
@@ -21,6 +21,13 @@ class UserProfileViewSet(mixins.CreateModelMixin,
                          mixins.DestroyModelMixin,
                          viewsets.GenericViewSet):
     queryset = UserProfile.objects.all()
+
+    def get_object(self) -> UserProfile:
+        try:
+            user_id = self.kwargs['pk']
+            return UserProfile.objects.get(user__id=user_id)
+        except (UserProfile.DoesNotExist, KeyError):
+            raise DosNotExistUserException
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -75,9 +82,7 @@ class UserProfileViewSet(mixins.CreateModelMixin,
             user = request.GET.get('name')
             user_profile = UserProfile.objects.get(user__nickname=user)
         except UserProfile.DoesNotExist:
-            return Response({
-                'message': '유저를 찾을 수 없습니다'
-            }, status=status.HTTP_200_OK)
+            raise DosNotExistUserException
         else:
             user_data = {
                 'email': user_profile.user.email,
@@ -92,24 +97,42 @@ class UserProfileViewSet(mixins.CreateModelMixin,
 
     @action(methods=['GET'], detail=True, url_path='friend-list')
     def friend_list(self, request, pk=None):
-        try:
-            user = UserProfile.objects.get(user__id=pk)
-        except UserProfile.DoesNotExist:
-            return Response({
-                'success': False,
-                'data': {
-                    'message': 'User not found'
-                }
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        friends_serializer = user.friends.values('id', 'username', 'nickname')
-
+        user = self.get_object()
+        friends_serializer = user.get_friends()
         return Response({
             'success': True,
             'data': {
                 'friends': friends_serializer
             }
         }, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=True, url_path='received-friend-request-list')
+    # 나에게 친구 요청 보낸 유저 리스트
+    def received_friend_request_list(self, request, pk=None):
+        user = self.get_object().user
+        request_users = [
+            friend_request.request_user for friend_request in FriendRequest.objects.filter(
+                assent=False,
+                response_user=user
+            ).select_related('request_user')
+        ]
+        request_user_data = UserSerializer(request_users, many=True).data
+
+        return Response({'data': request_user_data})
+
+    @action(methods=['GET'], detail=True, url_path='sent-friend-request-list')
+    # 내가 친구 요청 보낸 유저 리스트
+    def sent_friend_request_list(self, request, pk=None):
+        user = self.get_object().user
+        response_users = [
+            friend_request.response_user for friend_request in FriendRequest.objects.filter(
+                assent=False,
+                request_user=user
+            ).select_related('response_user')
+        ]
+        request_user_data = UserSerializer(response_users, many=True).data
+
+        return Response({'data': request_user_data})
 
 
 @api_view(['GET'])
