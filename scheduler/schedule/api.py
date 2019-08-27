@@ -10,7 +10,7 @@ class HolidayAPI(object):
     def __init__(self):
         self.holiday_base_url = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/{holiday_kinds}?"\
                                 "solYear={year}&solMonth={month}&ServiceKey=%s" % settings.API_KEY
-        self.parse_category = ["getHoliDeInfo", "getRestDeInfo", "get24DivisionsInfo", "getSundryDayInfo", ]
+        self.parse_category = ("getHoliDeInfo", "getRestDeInfo", "get24DivisionsInfo", "getSundryDayInfo",)
 
     def __call__(self, *args, **kwargs):
         for category in self.parse_category:
@@ -42,7 +42,8 @@ class HolidayAPI(object):
                     date = datetime.datetime.strptime(date, "%Y%m%d")
                     self.save_holiday(name, is_holiday, date)
 
-    def save_holiday(self, name, is_holiday, date):
+    @staticmethod
+    def save_holiday(name, is_holiday, date):
         Holiday.objects.get_or_create(name=name, is_holiday=is_holiday, date=date)
 
 

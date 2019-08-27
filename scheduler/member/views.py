@@ -45,7 +45,7 @@ class UserProfileViewSet(mixins.CreateModelMixin,
             user_profile.user.set_password(password)
             user_profile.user.save()
             serializer.validated_data['user']['id'] = user_profile.user_id
-        except:
+        except (KeyError, AttributeError):
             return Response({
                 'message': '회원가입 오류'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -62,7 +62,7 @@ class UserProfileViewSet(mixins.CreateModelMixin,
         serializer.is_valid(raise_exception=True)
         try:
             self.perform_update(serializer)
-        except:
+        except Exception:
             return Response({
                 'message': '정보 수정 오류'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

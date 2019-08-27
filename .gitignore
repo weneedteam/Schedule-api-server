@@ -2,6 +2,7 @@ __pycache__
 local_uwsgi.ini
 *.pyc
 env/
+venv/
 *.sock
 log/
 .idea/

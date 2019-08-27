@@ -6,7 +6,7 @@ from django.conf import settings
 class Notify:
     push_service = FCMNotification(api_key=settings.FCM_API_KEY)
 
-    def __init__(self, message_body, registration_ids = None, data_message = None, message_title = None):
+    def __init__(self, message_body, registration_ids=None, data_message=None, message_title=None):
         self.message_title = message_title
         self.message_body = message_body
         self.data_message = data_message
