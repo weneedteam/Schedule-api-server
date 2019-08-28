@@ -131,6 +131,8 @@ INTERNAL_IPS = '127.0.0.1'
 
 AUTH_USER_MODEL = 'member.User'
 
+ACCOUNT_USER_MODEL_USERNAME_FIELD = "email"
+
 SITE_ID = 1
 
 import local_settings
