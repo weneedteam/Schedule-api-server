@@ -1,18 +1,30 @@
 from django.db import models
-
 from django.contrib.auth.models import AbstractUser
+
+from utils.models import TimestampedModel
 
 
 class User(AbstractUser):
-    username = models.CharField(max_length=30)
-    nickname = models.CharField(max_length=30, unique=True, null=False, blank=False)
-    email = models.EmailField(unique=True)
+    username = None
+    nickname = None
+    email = models.EmailField(
+        unique=True,
+        verbose_name='이메일',
+    )
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'nickname', ]
+    REQUIRED_FIELDS = []
+
+    def __str__(self):
+        return f'User(ID {self.id})'
+
+    class Meta:
+        db_table = 'user'
+        verbose_name = '유저'
+        verbose_name_plural = '{} {}'.format(verbose_name, '목록')
 
 
-class UserProfile(models.Model):
+class UserProfile(TimestampedModel):
     KOREAN = 'KR'
     ENGLISH = 'EN'
 
@@ -21,24 +33,75 @@ class UserProfile(models.Model):
         (ENGLISH, 'English'),
     )
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    birth = models.DateField(null=False, blank=False)
-    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default="KR", null=False)
-    friends = models.ManyToManyField(User, related_name='userProfile_friends')
+    user = models.OneToOneField(
+        to=User,
+        on_delete=models.CASCADE,
+        verbose_name='유저',
+    )
+    username = models.CharField(
+        max_length=30,
+        verbose_name='이름',
+    )
+    nickname = models.CharField(
+        max_length=30,
+        verbose_name='닉네임',
+    )
+    birth = models.DateField(
+        verbose_name='생년월일',
+    )
+    language = models.CharField(
+        max_length=2,
+        choices=LANGUAGE_CHOICES,
+        default="KR",
+        verbose_name='언어',
+    )
+    friends = models.ManyToManyField(
+        to=User,
+        related_name='friends',
+        verbose_name='친구목록',
+    )
+
+    def __str__(self):
+        return f'UserProfile(ID {self.id}, by {self.user}, at {self.datetime})'
+
+    class Meta:
+        db_table = 'userProfile'
+        verbose_name = '프로필'
+        verbose_name_plural = '{} {}'.format(verbose_name, '목록')
 
     def get_friends(self, *args, **kwargs):
         return self.friends.filter(**kwargs).values('id', 'username', 'nickname', *args)
 
 
-class FriendRequest(models.Model):
-    request_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_request_user')
-    response_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_response_user')
-    assent = models.BooleanField(null=False, default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    assented_at = models.DateTimeField(null=True, blank=True)
+class FriendRequest(TimestampedModel):
+    request_user = models.ForeignKey(
+        to=User,
+        on_delete=models.CASCADE,
+        related_name='request_user',
+        verbose_name='요청자',
+    )
+    response_user = models.ForeignKey(
+        to=User,
+        on_delete=models.CASCADE,
+        related_name='response_user',
+        verbose_name='수락자',
+    )
+    assent = models.BooleanField(
+        verbose_name='수락여부'
+    )
+    assented_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='수락일시',
+    )
 
     def __str__(self):
         return "{} -> {}" .format(self.request_user, self.response_user)
+
+    class Meta:
+        db_table = 'friendRequest'
+        verbose_name = '친구 요청 status'
+        verbose_name_plural = '{} {}'.format(verbose_name, '목록')
 
     @classmethod
     def get_friend_request_list(cls, **kwargs):
