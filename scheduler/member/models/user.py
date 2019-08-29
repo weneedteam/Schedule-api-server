@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+from member.models.user_manager import UserManager
 from utils.models import TimestampedModel
 
 
@@ -14,6 +15,8 @@ class User(AbstractUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+
+    objects = UserManager()
 
     def __str__(self):
         return f'User(ID {self.id})'
